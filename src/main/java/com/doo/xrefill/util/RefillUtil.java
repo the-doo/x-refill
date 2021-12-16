@@ -2,21 +2,16 @@ package com.doo.xrefill.util;
 
 import com.doo.xrefill.Refill;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.collection.DefaultedList;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 /**
  * 补充工具
@@ -24,84 +19,106 @@ import java.util.concurrent.TimeUnit;
 public class RefillUtil {
 
     /**
-     * 玩家缓存
-     */
-    private static final Map<PlayerEntity, ServerPlayerEntity> PLAYER_MAP = new HashMap<>(1);
-
-    /**
      * 不是同一种物品
      */
     private static final int DIFF = 20;
 
     /**
-     * 获取服务端当前玩家
-     *
-     * @param clientPlayer 本地玩家
-     * @return 玩家
+     * screen slot index
      */
-    public static boolean exist(ClientPlayerEntity clientPlayer) {
-        if (clientPlayer == null) {
-            return false;
-        }
-        ServerPlayerEntity player = PLAYER_MAP.get(clientPlayer);
-        if (player == null) {
-            PLAYER_MAP.clear();
-            MinecraftServer server;
-            if ((server = MinecraftClient.getInstance().getServer()) == null) {
-                return false;
-            }
-            PLAYER_MAP.put(clientPlayer, server.getPlayerManager().getPlayer(clientPlayer.getUuid()));
-        }
-        return true;
-    }
+    private static final int ARMOR_IDX = 5;
+    private static final int MAIN_HAND_IDX = 36;
+    private static final int OFF_HAND_IDX = 45;
 
     /**
      * 补充
      *
      * @param player 本地玩家
-     * @param hash 物品hash
-     * @param item 物品
+     * @param stack  this
+     * @param item   item
      */
-    public static void refill(PlayerEntity player, int hash, Item item) {
+    public static void refill(PlayerEntity player, ItemStack stack, Item item) {
         if (!Refill.option.enable) {
             return;
         }
-        PlayerEntity serverPlayer = PLAYER_MAP.get(player);
-        if (serverPlayer == null) {
+        ClientPlayerInteractionManager manager = MinecraftClient.getInstance().interactionManager;
+        if (manager == null) {
             return;
         }
-        Arrays.stream(EquipmentSlot.values()).filter(e -> serverPlayer.getEquippedStack(e).hashCode() == hash)
-                .findAny().ifPresent(e ->
-                    // 找出背包中相同物品
-                    serverPlayer.getInventory().main.stream()
-                            .filter(i -> !i.isEmpty() && getSortNum(i, item) < DIFF)
-                            .min(Comparator.comparing(i -> getSortNum(i, item)))
-                            .ifPresent(i -> {
-                                // 替换
-                                ForkJoinPool.commonPool().submit(() -> {
-                                    try {
-                                        TimeUnit.MILLISECONDS.sleep(200);
-                                        if (serverPlayer.getEquippedStack(e).isEmpty()) {
-                                            serverPlayer.equipStack(e, i.copy());
-                                            i.setCount(0);
-                                        }
-                                    } catch (Exception ignore) {}
-                                });
-                            })
-                );
+        ifRefill((current, next) -> MinecraftClient.getInstance().execute(() -> {
+            // button = 0 mean left click in inventory slot
+            manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player);
+            manager.clickSlot(0, current, 0, SlotActionType.PICKUP, player);
+        }), player, stack, item);
+    }
+
+    private static void ifRefill(BiConsumer<Integer, Integer> refillSetter, PlayerEntity player, ItemStack stack, Item item) {
+        // 找到当前操作的栈
+        int current = -1;
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (player.getEquippedStack(slot) == stack) {
+                current = getEquipmentSlotInScreen(slot, player.getInventory().selectedSlot);
+                break;
+            }
+        }
+        if (current == -1) {
+            return;
+        }
+
+        DefaultedList<ItemStack> main = player.getInventory().main;
+        // sort number
+        double min = DIFF, prev = DIFF;
+        // temp stack
+        ItemStack tmp;
+        int next = -1;
+        for (int i = 0; i < main.size(); i++) {
+            tmp = main.get(i);
+            // if min < prev
+            if (tmp.getItem() == item && (min = Math.min(min, getSortNum(tmp, item))) < prev) {
+                next = i;
+                prev = min;
+            }
+        }
+        if (next == -1) {
+            return;
+        }
+        if (next < 9) {
+            next += MAIN_HAND_IDX;
+        }
+        refillSetter.accept(current, next);
+    }
+
+    private static int getEquipmentSlotInScreen(EquipmentSlot slot, int selectedSlot) {
+        int armorIdx = 0;
+        switch (slot) {
+            case MAINHAND:
+                return selectedSlot + MAIN_HAND_IDX;
+            case OFFHAND:
+                return OFF_HAND_IDX;
+            case FEET:
+                armorIdx++;
+            case LEGS:
+                armorIdx++;
+            case CHEST:
+                armorIdx++;
+            case HEAD:
+                return ARMOR_IDX + armorIdx;
+            default:
+                return -1;
+        }
     }
 
     /**
      * 是相同的物品
      *
      * @param itemStack 物品1
-     * @param item2 物品2
+     * @param item2     物品2
      * @return true or false
      */
     private static double getSortNum(ItemStack itemStack, Item item2) {
         int sortNum = DIFF;
         Item item = itemStack.getItem();
-        if (item == item2) {
+        if (itemStack.isOf(item2)) {
             sortNum = 1;
         } else if (item.getClass() == item2.getClass()) {
             sortNum = 2;
@@ -110,6 +127,6 @@ public class RefillUtil {
         } else if ((item.getGroup() == ItemGroup.BUILDING_BLOCKS && item2.getGroup() == ItemGroup.BUILDING_BLOCKS)) {
             sortNum = 4;
         }
-        return sortNum + itemStack.getMaxDamage() / 100000D;
+        return sortNum + (itemStack.getMaxDamage() - itemStack.getDamage()) / 100000D;
     }
 }
