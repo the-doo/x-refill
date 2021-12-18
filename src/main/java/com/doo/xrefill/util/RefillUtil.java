@@ -1,14 +1,20 @@
 package com.doo.xrefill.util;
 
 import com.doo.xrefill.Refill;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.collection.DefaultedList;
 
 import java.util.function.BiConsumer;
@@ -16,6 +22,7 @@ import java.util.function.BiConsumer;
 /**
  * 补充工具
  */
+@Environment(EnvType.CLIENT)
 public class RefillUtil {
 
     /**
@@ -34,10 +41,12 @@ public class RefillUtil {
      * 补充
      *
      * @param player 本地玩家
-     * @param stack  this
-     * @param item   item
+     * @param stack  stack
      */
-    public static void refill(PlayerEntity player, ItemStack stack, Item item) {
+    public static void tryRefill(PlayerEntity player, ItemStack stack) {
+        if (stack.isStackable() && stack.getCount() > 1 || stack.isDamageable() && stack.getMaxDamage() - stack.getDamage() > 1) {
+            return;
+        }
         if (!Refill.option.enable) {
             return;
         }
@@ -49,10 +58,10 @@ public class RefillUtil {
             // button = 0 mean left click in inventory slot
             manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player);
             manager.clickSlot(0, current, 0, SlotActionType.PICKUP, player);
-        }), player, stack, item);
+        }), player, stack);
     }
 
-    private static void ifRefill(BiConsumer<Integer, Integer> refillSetter, PlayerEntity player, ItemStack stack, Item item) {
+    private static void ifRefill(BiConsumer<Integer, Integer> refillSetter, PlayerEntity player, ItemStack stack) {
         // 找到当前操作的栈
         int current = -1;
         for (EquipmentSlot slot : EquipmentSlot.values()) {
@@ -70,11 +79,12 @@ public class RefillUtil {
         double min = DIFF, prev = DIFF;
         // temp stack
         ItemStack tmp;
+        Item item = stack.getItem();
         int next = -1;
         for (int i = 0; i < main.size(); i++) {
             tmp = main.get(i);
             // if min < prev
-            if (tmp.getItem() == item && (min = Math.min(min, getSortNum(tmp, item))) < prev) {
+            if (tmp != stack && (min = Math.min(min, getSortNum(tmp, item))) < prev) {
                 next = i;
                 prev = min;
             }
@@ -82,12 +92,24 @@ public class RefillUtil {
         if (next == -1) {
             return;
         }
+
         if (next < 9) {
             next += MAIN_HAND_IDX;
         }
+
         refillSetter.accept(current, next);
     }
 
+    /**
+     * in screen slot
+     * <p>
+     * mainHand = 36 + 0 ~ 36 + 9
+     * offHand = 45
+     *
+     * @param slot         slot
+     * @param selectedSlot selectedSlot
+     * @return inScreenSlot
+     */
     private static int getEquipmentSlotInScreen(EquipmentSlot slot, int selectedSlot) {
         int armorIdx = 0;
         switch (slot) {
@@ -128,5 +150,48 @@ public class RefillUtil {
             sortNum = 4;
         }
         return sortNum + (itemStack.getMaxDamage() - itemStack.getDamage()) / 100000D;
+    }
+
+    public static void parserPacket(ClientPlayerEntity player, Byte status) {
+        // consumeItem refill
+        if (status == 9) {
+            tryRefill(player, player.getStackInHand(player.getActiveHand()));
+            return;
+        }
+
+        // equipment refill
+        EquipmentSlot slot = getEquipment(status);
+        if (slot == null) {
+            return;
+        }
+
+        tryRefill(player, player.getEquippedStack(slot));
+    }
+
+    /**
+     * 根据接收的状态码获取当且编码所代表的装备栏
+     *
+     * @param status 状态
+     * @return 装备栏
+     * @see LivingEntity#getEquipmentBreakStatus(net.minecraft.entity.EquipmentSlot)
+     */
+    private static EquipmentSlot getEquipment(Byte status) {
+        return switch (status) {
+            case 47 -> EquipmentSlot.MAINHAND;
+            case 48 -> EquipmentSlot.OFFHAND;
+            case 49 -> EquipmentSlot.HEAD;
+            case 50 -> EquipmentSlot.CHEST;
+            case 51 -> EquipmentSlot.LEGS;
+            case 52 -> EquipmentSlot.FEET;
+            default -> null;
+        };
+    }
+
+    public static void register() {
+        // block refill
+        UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
+            tryRefill(player, player.getStackInHand(hand));
+            return ActionResult.PASS;
+        });
     }
 }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "xrefill",
-  "version": "1.0.8",
+  "version": "1.0.9",
 
   "name": "xrefill",
   "description": "补充使用完的物品\n(refill used item when item is empty)",
