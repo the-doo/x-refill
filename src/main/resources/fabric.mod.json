@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "xrefill",
-  "version": "1.0.5",
+  "version": "mod_version = 1.18-1",
 
-  "name": "xrefill",
-  "description": "补充使用完的物品\n(refill used item when item is empty)",
+  "name": "X-Refill",
+  "description": "补充使用完的物品\n(Refill used item when item is empty)",
   "authors": [
     "doo"
   ],
@@ -29,7 +29,7 @@
   "depends": {
     "fabricloader": ">=0.7.4",
     "fabric": "*",
-    "minecraft": "1.16.x"
+    "minecraft": "1.18.x"
   },
   "recommends": {
     "modmenu": "*"

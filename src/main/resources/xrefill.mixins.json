@@ -2,11 +2,11 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.doo.xrefill.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_16",
   "mixins": [
   ],
   "client": [
-    "ItemStackMixin"
+    "ClientPlayerEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
