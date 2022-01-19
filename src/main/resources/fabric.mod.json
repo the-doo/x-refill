@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "xrefill",
-  "version": "1.0.9",
+  "version": "mod_version = 1.18-1",
 
-  "name": "xrefill",
-  "description": "补充使用完的物品\n(refill used item when item is empty)",
+  "name": "X-Refill",
+  "description": "补充使用完的物品\n(Refill used item when item is empty)",
   "authors": [
     "doo"
   ],

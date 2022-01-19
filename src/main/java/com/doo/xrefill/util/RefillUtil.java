@@ -4,6 +4,7 @@ import com.doo.xrefill.Refill;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
@@ -16,7 +17,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.collection.DefaultedList;
+import org.apache.commons.lang3.StringUtils;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 /**
@@ -37,6 +42,8 @@ public class RefillUtil {
     private static final int MAIN_HAND_IDX = 36;
     private static final int OFF_HAND_IDX = 45;
 
+    private static final ScheduledExecutorService EXEC = Executors.newSingleThreadScheduledExecutor();
+
     /**
      * 补充
      *
@@ -54,11 +61,15 @@ public class RefillUtil {
         if (manager == null) {
             return;
         }
-        ifRefill((current, next) -> MinecraftClient.getInstance().execute(() -> {
+        ifRefill((current, next) -> {
             // button = 0 mean left click in inventory slot
             manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player);
-            manager.clickSlot(0, current, 0, SlotActionType.PICKUP, player);
-        }), player, stack);
+            EXEC.schedule(() -> {
+                manager.clickSlot(0, current, 0, SlotActionType.PICKUP, player);
+                // rollback if set it wrong or can set empty back
+                EXEC.schedule(() -> manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player), 150, TimeUnit.MILLISECONDS);
+            }, 150, TimeUnit.MILLISECONDS);
+        }, player, stack);
     }
 
     private static void ifRefill(BiConsumer<Integer, Integer> refillSetter, PlayerEntity player, ItemStack stack) {
@@ -190,6 +201,12 @@ public class RefillUtil {
     public static void register() {
         // block refill
         UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
+            // if open chest entity, don't do anything
+            BlockEntity entity = world.getBlockEntity(hit.getBlockPos());
+            if (entity != null && StringUtils.containsIgnoreCase(entity.getClass().getName(), "chest")) {
+                return ActionResult.PASS;
+            }
+
             tryRefill(player, player.getStackInHand(hand));
             return ActionResult.PASS;
         });
