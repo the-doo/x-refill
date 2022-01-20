@@ -11,13 +11,13 @@ import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.collection.DefaultedList;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -203,7 +203,7 @@ public class RefillUtil {
         UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
             // if open chest entity, don't do anything
             BlockEntity entity = world.getBlockEntity(hit.getBlockPos());
-            if (entity != null && StringUtils.containsIgnoreCase(entity.getClass().getName(), "chest")) {
+            if (entity instanceof Inventory) {
                 return ActionResult.PASS;
             }
 
