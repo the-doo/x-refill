@@ -52,18 +52,18 @@ public class ModMenuScreen extends Screen {
         if (client != null) {
             // 返回上个页面
             client.currentScreen = this.pre;
-            // 保存设置的配置
+            // save config
             Config.write(Refill.ID, Refill.option);
         }
     }
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-        // 画背景
+        // background
         super.renderBackground(matrices);
-        // 画按钮
+        // button
         list.render(matrices, mouseX, mouseY, delta);
-        // 画其他
+        // other
         super.render(matrices, mouseX, mouseY, delta);
     }
 }

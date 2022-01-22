@@ -29,14 +29,14 @@ public class Config {
     private static final Path path = FileSystems.getDefault().getPath("config", "doo.json");
 
     /**
-     * json转换器
+     * json
      */
     private static final Gson json = new GsonBuilder().setPrettyPrinting().create();
 
     /**
      * 读取配置
      *
-     * @param key key（modId）
+     * @param key key - modId
      * @param t T.class
      * @return T
      */
@@ -47,7 +47,7 @@ public class Config {
             JsonElement e = read.get(key);
             return e == null ? defaultValue : json.fromJson(e, t);
         } catch (NoSuchFileException ignored) {
-            // 文件不存在（file not found）
+            // file not found
         } catch (Exception e) {
             Refill.LOGGER.log(Level.WARN, "文件读取失败(read file error) : " + path.toString(), e);
         }
@@ -71,9 +71,9 @@ public class Config {
     }
 
     /**
-     * 释放锁
+     * unlock
      *
-     * @param lock 锁
+     * @param lock lock
      */
     private static void unlock(FileLock lock) {
         if (lock != null) {
@@ -96,7 +96,7 @@ public class Config {
         try {
             FileChannel open = FileChannel.open(path,
                     StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
-            // 等待获取锁10秒
+            // lock 10s
             long time = System.currentTimeMillis();
             while (lock == null) {
                 try {
@@ -107,10 +107,10 @@ public class Config {
                     }
                 }
             }
-            // 读取所有
+            // all config
             JsonObject read = read(open);
             read.add(key, json.toJsonTree(value));
-            // 写文件
+            // write
             open = lock.channel();
             // 清空
             open.truncate(0);

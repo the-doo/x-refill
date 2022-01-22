@@ -31,7 +31,7 @@ import java.util.function.BiConsumer;
 public class RefillUtil {
 
     /**
-     * 不是同一种物品
+     * different item
      */
     private static final int DIFF = 20;
 
@@ -180,22 +180,22 @@ public class RefillUtil {
     }
 
     /**
-     * 根据接收的状态码获取当且编码所代表的装备栏
+     * check status
      *
-     * @param status 状态
-     * @return 装备栏
+     * @param status status
+     * @return equip
      * @see LivingEntity#getEquipmentBreakStatus(net.minecraft.entity.EquipmentSlot)
      */
     private static EquipmentSlot getEquipment(Byte status) {
-        return switch (status) {
-            case 47 -> EquipmentSlot.MAINHAND;
-            case 48 -> EquipmentSlot.OFFHAND;
-            case 49 -> EquipmentSlot.HEAD;
-            case 50 -> EquipmentSlot.CHEST;
-            case 51 -> EquipmentSlot.LEGS;
-            case 52 -> EquipmentSlot.FEET;
-            default -> null;
-        };
+        switch (status) {
+            case 47: return EquipmentSlot.MAINHAND;
+            case 48: return EquipmentSlot.OFFHAND;
+            case 49: return EquipmentSlot.HEAD;
+            case 50: return EquipmentSlot.CHEST;
+            case 51: return EquipmentSlot.LEGS;
+            case 52: return EquipmentSlot.FEET;
+            default: return null;
+        }
     }
 
     public static void register() {

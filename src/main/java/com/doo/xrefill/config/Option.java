@@ -6,7 +6,7 @@ package com.doo.xrefill.config;
 public class Option {
 
     /**
-     * 是否开启替换 --- 默认开启
+     * enabled
      */
     public boolean enable = true;
 }
