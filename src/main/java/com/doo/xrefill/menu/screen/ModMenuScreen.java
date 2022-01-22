@@ -6,8 +6,8 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.ButtonListWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.option.CyclingOption;
-import net.minecraft.client.option.Option;
+import net.minecraft.client.options.BooleanOption;
+import net.minecraft.client.options.Option;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
 
@@ -16,8 +16,8 @@ import net.minecraft.text.LiteralText;
  */
 public class ModMenuScreen extends Screen {
 
-    private static final Option ENABLE = CyclingOption.create("x_refill.menu.option.enable",
-            o -> Refill.option.enable, (g, o, v) -> Refill.option.enable = v);
+    private static final Option ENABLE = new BooleanOption("x_refill.menu.option.enable",
+            o -> Refill.option.enable, (o, v) -> Refill.option.enable = v);
 
     private static final ModMenuScreen INSTANCE = new ModMenuScreen();
 
@@ -35,9 +35,9 @@ public class ModMenuScreen extends Screen {
         list = new ButtonListWidget(this.client, this.width, this.height, 32, this.height - 32, 25);
         // 显示基础高度
         list.addAll(options);
-        this.addSelectableChild(list);
+        this.addChild(list);
         // 返回按钮
-        this.addDrawableChild(new ButtonWidget(this.width / 2 - 150 / 2, this.height - 28, 150, 20,
+        this.addButton(new ButtonWidget(this.width / 2 - 150 / 2, this.height - 28, 150, 20,
                 ScreenTexts.BACK, b -> INSTANCE.close()));
     }
 

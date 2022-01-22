@@ -77,7 +77,7 @@ public class RefillUtil {
         int current = -1;
         for (EquipmentSlot slot : EquipmentSlot.values()) {
             if (player.getEquippedStack(slot) == stack) {
-                current = getEquipmentSlotInScreen(slot, player.getInventory().selectedSlot);
+                current = getEquipmentSlotInScreen(slot, player.inventory.selectedSlot);
                 break;
             }
         }
@@ -85,7 +85,7 @@ public class RefillUtil {
             return;
         }
 
-        DefaultedList<ItemStack> main = player.getInventory().main;
+        DefaultedList<ItemStack> main = player.inventory.main;
         // sort number
         double min = DIFF, prev = DIFF;
         // temp stack
@@ -151,7 +151,7 @@ public class RefillUtil {
     private static double getSortNum(ItemStack itemStack, Item item2) {
         int sortNum = DIFF;
         Item item = itemStack.getItem();
-        if (itemStack.isOf(item2)) {
+        if (item == item2) {
             sortNum = 1;
         } else if (item.getClass() == item2.getClass()) {
             sortNum = 2;
@@ -200,7 +200,7 @@ public class RefillUtil {
 
     public static void register() {
         // block refill
-        UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
+        UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
             // if open chest entity, don't do anything
             BlockEntity entity = world.getBlockEntity(hit.getBlockPos());
             if (entity instanceof Inventory) {
