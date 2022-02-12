@@ -1,3 +1,4 @@
 {
-    "x_refill.menu.option.enable": "Enabled Mod"
+    "x_refill.menu.option.enable": "Enabled Mod",
+    "x_refill.menu.option.delay": "Refill Delay Time: %dms"
 }

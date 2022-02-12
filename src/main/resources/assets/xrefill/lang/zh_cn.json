@@ -1,3 +1,4 @@
 {
-    "x_refill.menu.option.enable": "启用Mod"
+    "x_refill.menu.option.enable": "启用Mod",
+    "x_refill.menu.option.delay": "补充延时: %dms"
 }

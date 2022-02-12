@@ -7,9 +7,11 @@ import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.ButtonListWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.option.CyclingOption;
+import net.minecraft.client.option.DoubleOption;
 import net.minecraft.client.option.Option;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.TranslatableText;
 
 /**
  * mod menu 配置界面
@@ -18,6 +20,10 @@ public class ModMenuScreen extends Screen {
 
     private static final Option ENABLE = CyclingOption.create("x_refill.menu.option.enable",
             o -> Refill.option.enable, (g, o, v) -> Refill.option.enable = v);
+
+    private static final Option DELAY = new DoubleOption("x_refill.menu.option.delay", 0, 1000, 1,
+            g -> (double) Refill.option.delay, (g, v) -> Refill.option.delay = v.longValue(),
+            (g, o) -> new TranslatableText("x_refill.menu.option.delay", Refill.option.delay));
 
     private static final ModMenuScreen INSTANCE = new ModMenuScreen();
 
@@ -31,7 +37,7 @@ public class ModMenuScreen extends Screen {
 
     @Override
     protected void init() {
-        Option[] options = {ENABLE};
+        Option[] options = {ENABLE, DELAY};
         list = new ButtonListWidget(this.client, this.width, this.height, 32, this.height - 32, 25);
         // 显示基础高度
         list.addAll(options);
