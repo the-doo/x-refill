@@ -68,7 +68,7 @@ public class RefillUtil {
                 manager.clickSlot(0, current, 0, SlotActionType.PICKUP, player);
                 // rollback if set it wrong or can set empty back
                 EXEC.schedule(() -> manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player), 150, TimeUnit.MILLISECONDS);
-            }, 150, TimeUnit.MILLISECONDS);
+            }, Refill.option.delay, TimeUnit.MILLISECONDS);
         }, player, stack);
     }
 
