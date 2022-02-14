@@ -4,14 +4,12 @@ import com.doo.xrefill.Refill;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -51,16 +49,21 @@ public class RefillUtil {
      * @param stack  stack
      */
     public static void tryRefill(PlayerEntity player, ItemStack stack) {
+        if (!Refill.option.enable) {
+            return;
+        }
         if (stack.isStackable() && stack.getCount() > 1 || stack.isDamageable() && stack.getMaxDamage() - stack.getDamage() > 1) {
             return;
         }
-        if (!Refill.option.enable) {
+        // if open screen don't do anything
+        if (MinecraftClient.getInstance().currentScreen != null) {
             return;
         }
         ClientPlayerInteractionManager manager = MinecraftClient.getInstance().interactionManager;
         if (manager == null) {
             return;
         }
+
         ifRefill((current, next) -> {
             // button = 0 mean left click in inventory slot
             manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player);
@@ -201,12 +204,6 @@ public class RefillUtil {
     public static void register() {
         // block refill
         UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
-            // if open chest entity, don't do anything
-            BlockEntity entity = world.getBlockEntity(hit.getBlockPos());
-            if (entity instanceof Inventory) {
-                return ActionResult.PASS;
-            }
-
             tryRefill(player, player.getStackInHand(hand));
             return ActionResult.PASS;
         });
