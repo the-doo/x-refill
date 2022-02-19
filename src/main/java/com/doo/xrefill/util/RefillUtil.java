@@ -52,7 +52,7 @@ public class RefillUtil {
         if (!Refill.option.enable) {
             return;
         }
-        if (stack.isStackable() && stack.getCount() > 1 || stack.isDamageable() && stack.getMaxDamage() - stack.getDamage() > 1) {
+        if (stack.isEmpty() || stack.isStackable() && stack.getCount() > 1 || stack.isDamageable() && stack.getMaxDamage() - stack.getDamage() > 1) {
             return;
         }
         // if open screen don't do anything
@@ -204,7 +204,10 @@ public class RefillUtil {
     public static void register() {
         // block refill
         UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
-            tryRefill(player, player.getStackInHand(hand));
+            if (world.getBlockEntity(hit.getBlockPos()) == null) {
+                tryRefill(player, player.getStackInHand(hand));
+            }
+
             return ActionResult.PASS;
         });
     }
