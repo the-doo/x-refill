@@ -70,7 +70,7 @@ public class RefillUtil {
             EXEC.schedule(() -> {
                 manager.clickSlot(0, current, 0, SlotActionType.PICKUP, player);
                 // rollback if set it wrong or can set empty back
-                EXEC.schedule(() -> manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player), 150, TimeUnit.MILLISECONDS);
+                EXEC.schedule(() -> manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player), Refill.option.delay, TimeUnit.MILLISECONDS);
             }, Refill.option.delay, TimeUnit.MILLISECONDS);
         }, player, stack);
     }
@@ -204,10 +204,11 @@ public class RefillUtil {
     public static void register() {
         // block refill
         UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
-            if (world.getBlockEntity(hit.getBlockPos()) == null) {
-                tryRefill(player, player.getStackInHand(hand));
+            if (!Refill.option.enable || world.getBlockEntity(hit.getBlockPos()) != null || world.getBlockState(hit.getBlockPos()).createScreenHandlerFactory(world, hit.getBlockPos()) != null) {
+                return ActionResult.PASS;
             }
 
+            tryRefill(player, player.getStackInHand(hand));
             return ActionResult.PASS;
         });
     }
