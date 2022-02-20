@@ -204,7 +204,7 @@ public class RefillUtil {
     public static void register() {
         // block refill
         UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
-            if (world.getBlockEntity(hit.getBlockPos()) == null) {
+            if (world.getBlockEntity(hit.getBlockPos()) == null || world.getBlockState(hit.getBlockPos()).createScreenHandlerFactory(world, hit.getBlockPos()) == null) {
                 tryRefill(player, player.getStackInHand(hand));
             }
 
