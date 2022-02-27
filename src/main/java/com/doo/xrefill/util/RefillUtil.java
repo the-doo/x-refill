@@ -46,7 +46,7 @@ public class RefillUtil {
      * @param slot slot
      */
     public static void tryRefill(PlayerEntity player, ItemStack stack, EquipmentSlot slot) {
-        if (!Refill.option.enable) {
+        if (!Refill.option.enable || player.isCreative()) {
             return;
         }
         if (stack.isEmpty() || stack.isStackable() && stack.getCount() > 1 || stack.isDamageable() && stack.getMaxDamage() - stack.getDamage() > 1) {
