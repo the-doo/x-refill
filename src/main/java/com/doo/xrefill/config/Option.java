@@ -13,5 +13,5 @@ public class Option {
     /**
      * delay tune
      */
-    public long delay = 0;
+    public long delay = 50;
 }

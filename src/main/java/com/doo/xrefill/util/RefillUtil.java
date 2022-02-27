@@ -3,18 +3,15 @@ package com.doo.xrefill.util;
 import com.doo.xrefill.Refill;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.collection.DefaultedList;
 
 import java.util.concurrent.Executors;
@@ -47,9 +44,10 @@ public class RefillUtil {
      *
      * @param player 本地玩家
      * @param stack  stack
+     * @param slot   slot
      */
-    public static void tryRefill(PlayerEntity player, ItemStack stack) {
-        if (!Refill.option.enable) {
+    public static void tryRefill(PlayerEntity player, ItemStack stack, EquipmentSlot slot) {
+        if (!Refill.option.enable || player.isCreative()) {
             return;
         }
         if (stack.isEmpty() || stack.isStackable() && stack.getCount() > 1 || stack.isDamageable() && stack.getMaxDamage() - stack.getDamage() > 1) {
@@ -72,18 +70,12 @@ public class RefillUtil {
                 // rollback if set it wrong or can set empty back
                 EXEC.schedule(() -> manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player), Refill.option.delay, TimeUnit.MILLISECONDS);
             }, Refill.option.delay, TimeUnit.MILLISECONDS);
-        }, player, stack);
+        }, player, stack, slot);
     }
 
-    private static void ifRefill(BiConsumer<Integer, Integer> refillSetter, PlayerEntity player, ItemStack stack) {
+    private static void ifRefill(BiConsumer<Integer, Integer> refillSetter, PlayerEntity player, ItemStack stack, EquipmentSlot slot) {
         // 找到当前操作的栈
-        int current = -1;
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (player.getEquippedStack(slot) == stack) {
-                current = getEquipmentSlotInScreen(slot, player.getInventory().selectedSlot);
-                break;
-            }
-        }
+        int current = getEquipmentSlotInScreen(slot, player.getInventory().selectedSlot);
         if (current == -1) {
             return;
         }
@@ -154,22 +146,33 @@ public class RefillUtil {
     private static double getSortNum(ItemStack itemStack, Item item2) {
         int sortNum = DIFF;
         Item item = itemStack.getItem();
-        if (itemStack.isOf(item2)) {
+        if (item == item2 || item.isFood() && item2.isFood()) {
             sortNum = 1;
-        } else if (item.getClass() == item2.getClass()) {
-            sortNum = 2;
-        } else if ((item.isFood() && item2.isFood())) {
-            sortNum = 3;
-        } else if ((item.getGroup() == ItemGroup.BUILDING_BLOCKS && item2.getGroup() == ItemGroup.BUILDING_BLOCKS)) {
-            sortNum = 4;
+        } else if (item2 instanceof ArmorItem && item instanceof ArmorItem && ((ArmorItem) item2).getSlotType() == ((ArmorItem) item).getSlotType()) {
+            sortNum = 1;
+        } else if (item2 instanceof ShieldItem && item instanceof ShieldItem) {
+            sortNum = 1;
+        } else if (item2 instanceof ToolItem) {
+            if (item2.getClass() == item.getClass()) {
+                sortNum = 2;
+            } else if (item2.getClass().isInstance(item) || item.getClass() != Item.class && item.getClass().isInstance(item2)) {
+                sortNum = 3;
+            }
+        } else if (item2 instanceof BlockItem && (item2.getGroup() == item.getGroup())) {
+            if (((BlockItem) item2).getBlock() == ((BlockItem) item2).getBlock()) {
+                sortNum = 2;
+            } else {
+                sortNum = 3;
+            }
         }
+
         return sortNum + (itemStack.getMaxDamage() - itemStack.getDamage()) / 100000D;
     }
 
     public static void parserPacket(ClientPlayerEntity player, Byte status) {
         // consumeItem refill
         if (status == 9) {
-            tryRefill(player, player.getStackInHand(player.getActiveHand()));
+            tryRefill(player, player.getStackInHand(player.getActiveHand()), player.getActiveHand() == Hand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
             return;
         }
 
@@ -179,7 +182,7 @@ public class RefillUtil {
             return;
         }
 
-        tryRefill(player, player.getEquippedStack(slot));
+        tryRefill(player, player.getEquippedStack(slot), slot);
     }
 
     /**
@@ -199,17 +202,5 @@ public class RefillUtil {
             case 52 -> EquipmentSlot.FEET;
             default -> null;
         };
-    }
-
-    public static void register() {
-        // block refill
-        UseBlockCallback.EVENT.register(Refill.USE_BLOCK_CALLBACK, (player, world, hand, hit) -> {
-            if (!Refill.option.enable || world.getBlockEntity(hit.getBlockPos()) != null || world.getBlockState(hit.getBlockPos()).createScreenHandlerFactory(world, hit.getBlockPos()) != null) {
-                return ActionResult.PASS;
-            }
-
-            tryRefill(player, player.getStackInHand(hand));
-            return ActionResult.PASS;
-        });
     }
 }
