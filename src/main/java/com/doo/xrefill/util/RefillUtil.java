@@ -41,9 +41,10 @@ public class RefillUtil {
 
     /**
      * 补充
-     *  @param player 本地玩家
+     *
+     * @param player 本地玩家
      * @param stack  stack
-     * @param slot slot
+     * @param slot   slot
      */
     public static void tryRefill(PlayerEntity player, ItemStack stack, EquipmentSlot slot) {
         if (!Refill.option.enable || player.isCreative()) {
@@ -74,18 +75,7 @@ public class RefillUtil {
 
     private static void ifRefill(BiConsumer<Integer, Integer> refillSetter, PlayerEntity player, ItemStack stack, EquipmentSlot slot) {
         // 找到当前操作的栈
-        int current = -1;
-        if (slot != null) {
-            current = getEquipmentSlotInScreen(slot, player.getInventory().selectedSlot);
-        } else {
-            for (EquipmentSlot s : EquipmentSlot.values()) {
-                if (player.getEquippedStack(s) == stack) {
-                    current = getEquipmentSlotInScreen(s, player.getInventory().selectedSlot);
-                    break;
-                }
-            }
-        }
-
+        int current = getEquipmentSlotInScreen(slot, player.getInventory().selectedSlot);
         if (current == -1) {
             return;
         }
@@ -156,19 +146,23 @@ public class RefillUtil {
     private static double getSortNum(ItemStack itemStack, Item item2) {
         int sortNum = DIFF;
         Item item = itemStack.getItem();
-        if (itemStack.isOf(item2) || item.isFood() && item2.isFood()) {
+        if (item == item2 || item.isFood() && item2.isFood()) {
             sortNum = 1;
-        } else if (item2 instanceof ToolItem || item2 instanceof ArmorItem) {
+        } else if (item2 instanceof ArmorItem && item instanceof ArmorItem && ((ArmorItem) item2).getSlotType() == ((ArmorItem) item).getSlotType()) {
+            sortNum = 1;
+        } else if (item2 instanceof ShieldItem && item instanceof ShieldItem) {
+            sortNum = 1;
+        } else if (item2 instanceof ToolItem) {
             if (item2.getClass() == item.getClass()) {
                 sortNum = 2;
-            } else if (item2.getClass().isInstance(item) || item.getClass().isInstance(item2)) {
+            } else if (item2.getClass().isInstance(item) || item.getClass() != Item.class && item.getClass().isInstance(item2)) {
                 sortNum = 3;
             }
         } else if (item2 instanceof BlockItem && (item2.getGroup() == item.getGroup())) {
             if (((BlockItem) item2).getBlock() == ((BlockItem) item2).getBlock()) {
-                sortNum = 3;
+                sortNum = 2;
             } else {
-                sortNum = 4;
+                sortNum = 3;
             }
         }
 
