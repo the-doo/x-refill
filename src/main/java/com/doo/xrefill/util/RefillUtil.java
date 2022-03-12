@@ -24,27 +24,14 @@ import java.util.function.BiConsumer;
 @Environment(EnvType.CLIENT)
 public class RefillUtil {
 
-    /**
-     * 不是同一种物品
-     */
     private static final int DIFF = 20;
 
-    /**
-     * screen slot index
-     */
     private static final int ARMOR_IDX = 5;
     private static final int MAIN_HAND_IDX = 36;
     private static final int OFF_HAND_IDX = 45;
 
     private static final ScheduledExecutorService EXEC = Executors.newSingleThreadScheduledExecutor();
 
-    /**
-     * 补充
-     *
-     * @param player 本地玩家
-     * @param stack  stack
-     * @param slot   slot
-     */
     public static void tryRefill(PlayerEntity player, ItemStack stack, EquipmentSlot slot) {
         if (!Refill.option.enable || player.isCreative()) {
             return;
@@ -73,13 +60,14 @@ public class RefillUtil {
     }
 
     private static void ifRefill(BiConsumer<Integer, Integer> refillSetter, PlayerEntity player, ItemStack stack, EquipmentSlot slot) {
-        // 找到当前操作的栈
         int current = getEquipmentSlotInScreen(slot, player.getInventory().selectedSlot);
+//        int current = getEquipmentSlotInScreen(slot, player.inventory.selectedSlot);
         if (current == -1) {
             return;
         }
 
         DefaultedList<ItemStack> main = player.getInventory().main;
+//        DefaultedList<ItemStack> main = player.inventory.main;
         // sort number
         double min = DIFF, prev = DIFF;
         // temp stack
@@ -135,13 +123,6 @@ public class RefillUtil {
         }
     }
 
-    /**
-     * 是相同的物品
-     *
-     * @param itemStack 物品1
-     * @param item2     物品2
-     * @return true or false
-     */
     private static double getSortNum(ItemStack itemStack, Item item2) {
         int sortNum = DIFF;
         Item item = itemStack.getItem();
@@ -180,12 +161,6 @@ public class RefillUtil {
         tryRefill(player, player.getEquippedStack(slot), slot);
     }
 
-    /**
-     * 根据接收的状态码获取当且编码所代表的装备栏
-     *
-     * @param status 状态
-     * @return 装备栏
-     */
     private static EquipmentSlot getEquipment(Byte status) {
         // see LivingEntity#getEquipmentBreakStatus(net.minecraft.entity.EquipmentSlot)
         switch (status) {

@@ -18,8 +18,11 @@ import net.minecraft.text.TranslatableText;
  */
 public class ModMenuScreen extends Screen {
 
-    private static final Option ENABLE = CyclingOption.create("x_refill.menu.option.enable",
-            o -> Refill.option.enable, (g, o, v) -> Refill.option.enable = v);
+    private static final Option ENABLE =
+            CyclingOption.create("x_refill.menu.option.enable",
+                    o -> Refill.option.enable, (g, o, v) -> Refill.option.enable = v);
+//            new BooleanOption("x_refill.menu.option.enable",
+//                    o -> Refill.option.enable, (g, v) -> Refill.option.enable = v);
 
     private static final Option DELAY = new DoubleOption("x_refill.menu.option.delay", 0, 1000, 1,
             g -> (double) Refill.option.delay, (g, v) -> Refill.option.delay = v.longValue(),
@@ -39,10 +42,13 @@ public class ModMenuScreen extends Screen {
     protected void init() {
         Option[] options = {ENABLE, DELAY};
         list = new ButtonListWidget(this.client, this.width, this.height, 32, this.height - 32, 25);
-        // 显示基础高度
+
         list.addAll(options);
+
+//        this.addChild(list);
+//        this.addButton(new ButtonWidget(this.width / 2 - 150 / 2, this.height - 28, 150, 20,
+//                ScreenTexts.BACK, b -> INSTANCE.close()));
         this.addSelectableChild(list);
-        // 返回按钮
         this.addDrawableChild(new ButtonWidget(this.width / 2 - 150 / 2, this.height - 28, 150, 20,
                 ScreenTexts.BACK, b -> INSTANCE.close()));
     }
@@ -56,20 +62,15 @@ public class ModMenuScreen extends Screen {
 
     public void close() {
         if (client != null) {
-            // 返回上个页面
             client.currentScreen = this.pre;
-            // 保存设置的配置
             Config.write(Refill.ID, Refill.option);
         }
     }
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-        // 画背景
         super.renderBackground(matrices);
-        // 画按钮
         list.render(matrices, mouseX, mouseY, delta);
-        // 画其他
         super.render(matrices, mouseX, mouseY, delta);
     }
 }

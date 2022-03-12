@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "xrefill",
+  "version": "mod_version = 1.16-2",
+
+  "name": "X-Refill",
+  "description": "补充使用完的物品\n(Refill used item when item is empty)",
+  "authors": [
+    "doo"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": ""
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/xrefill/textures/icon.png",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.doo.xrefill.Refill"
+    ],
+    "modmenu": [ "com.doo.xrefill.menu.ModMenu" ]
+  },
+  "mixins": [
+    "xrefill.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": ["1.16.X"]
+  },
+  "recommends": {
+    "modmenu": "*"
+  },
+  "custom": {
+    "modmenu:clientsideOnly": true
+  }
+}
