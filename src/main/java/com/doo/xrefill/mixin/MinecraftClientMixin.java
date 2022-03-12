@@ -31,6 +31,7 @@ public abstract class MinecraftClientMixin {
         if (player == null) {
             return stack;
         }
+
         usedItem = stack.copy();
         usedHand = player.getMainHandStack() == stack ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND;
         return stack;
@@ -38,7 +39,8 @@ public abstract class MinecraftClientMixin {
 
     @Inject(method = "doItemUse", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ActionResult;shouldSwingHand()Z", ordinal = 1))
     private void onEntityStatusT(CallbackInfo ci) {
-        if (usedItem != null) {
+        ItemStack stack = player.getEquippedStack(usedHand);
+        if (stack.isEmpty()) {
             RefillUtil.tryRefill(player, usedItem, usedHand);
             usedItem = null;
             usedHand = null;

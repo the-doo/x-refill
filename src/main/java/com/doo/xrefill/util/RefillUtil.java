@@ -7,7 +7,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.screen.slot.SlotActionType;
@@ -68,7 +67,7 @@ public class RefillUtil {
             EXEC.schedule(() -> {
                 manager.clickSlot(0, current, 0, SlotActionType.PICKUP, player);
                 // rollback if set it wrong or can set empty back
-                EXEC.schedule(() -> manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player), Refill.option.delay, TimeUnit.MILLISECONDS);
+                EXEC.schedule(() -> manager.clickSlot(0, next, 0, SlotActionType.PICKUP, player), Refill.option.delay + 20, TimeUnit.MILLISECONDS);
             }, Refill.option.delay, TimeUnit.MILLISECONDS);
         }, player, stack, slot);
     }
@@ -159,11 +158,7 @@ public class RefillUtil {
                 sortNum = 3;
             }
         } else if (item2 instanceof BlockItem && (item2.getGroup() == item.getGroup())) {
-            if (((BlockItem) item2).getBlock() == ((BlockItem) item2).getBlock()) {
-                sortNum = 2;
-            } else {
-                sortNum = 3;
-            }
+            sortNum = ((BlockItem) item2).getBlock() == ((BlockItem) item2).getBlock() ? 2 : 3;
         }
 
         return sortNum + (itemStack.getMaxDamage() - itemStack.getDamage()) / 100000D;
@@ -190,17 +185,24 @@ public class RefillUtil {
      *
      * @param status 状态
      * @return 装备栏
-     * @see LivingEntity#getEquipmentBreakStatus(net.minecraft.entity.EquipmentSlot)
      */
     private static EquipmentSlot getEquipment(Byte status) {
-        return switch (status) {
-            case 47 -> EquipmentSlot.MAINHAND;
-            case 48 -> EquipmentSlot.OFFHAND;
-            case 49 -> EquipmentSlot.HEAD;
-            case 50 -> EquipmentSlot.CHEST;
-            case 51 -> EquipmentSlot.LEGS;
-            case 52 -> EquipmentSlot.FEET;
-            default -> null;
-        };
+        // see LivingEntity#getEquipmentBreakStatus(net.minecraft.entity.EquipmentSlot)
+        switch (status) {
+            case 47:
+                return EquipmentSlot.MAINHAND;
+            case 48:
+                return EquipmentSlot.OFFHAND;
+            case 49:
+                return EquipmentSlot.HEAD;
+            case 50:
+                return EquipmentSlot.CHEST;
+            case 51:
+                return EquipmentSlot.LEGS;
+            case 52:
+                return EquipmentSlot.FEET;
+            default:
+                return null;
+        }
     }
 }
